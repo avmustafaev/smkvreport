@@ -6,7 +6,7 @@ from aiogram.types import ReplyKeyboardRemove
 
 from app.database import add_user, get_user
 from app.models import init_db
-from app.keyboards import get_phone_keyboard, remove_keyboard
+from app.keyboards.keyboards import get_phone_keyboard, remove_keyboard
 from app.loadenv import LoadEnv
 
 # Инициализация базы данных

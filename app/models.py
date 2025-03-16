@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, BigInteger, String  # Изменяем Integer на BigInteger
+from sqlalchemy import create_engine, Column, BigInteger, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
@@ -14,7 +14,7 @@ Base = declarative_base()
 class User(Base):
     __tablename__ = "users"
 
-    chat_id = Column(BigInteger, primary_key=True)  # Изменяем Integer на BigInteger
+    chat_id = Column(BigInteger, primary_key=True)
     phone_number = Column(String, nullable=True)
     first_name = Column(String, nullable=True)
     last_name = Column(String, nullable=True)

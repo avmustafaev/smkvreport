@@ -4,7 +4,8 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from app.loadenv import LoadEnv
-from app.handlers import router
+from app.handlers.registeruser import router as register_router
+from app.handlers.superadmin import router as admin_router  # Импортируем новый роутер
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
@@ -23,8 +24,9 @@ bot = Bot(
 storage = MemoryStorage()
 dp = Dispatcher(storage=storage)
 
-# Подключаем роутер
-dp.include_router(router)
+# Подключаем роутеры
+dp.include_router(register_router)
+dp.include_router(admin_router)  # Подключаем роутер для админа
 
 # Запуск бота
 async def main():
