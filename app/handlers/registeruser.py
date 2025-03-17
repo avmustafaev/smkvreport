@@ -31,8 +31,7 @@ async def delete_previous_message(bot: Bot, chat_id: int, message_id: int):
 # Обработчик команды /start
 @router.message(CommandStart())
 async def send_welcome(message: types.Message, state: FSMContext, bot: Bot):
-    user = get_user(message.chat.id)
-    if user:
+    if user := get_user(message.chat.id):
         # Если пользователь уже зарегистрирован
         await message.reply(
             f"С возвращением, {user.first_name} {user.last_name}!\n"
@@ -42,10 +41,10 @@ async def send_welcome(message: types.Message, state: FSMContext, bot: Bot):
     else:
         # Если пользователь новый
         await message.answer("Привет! Давай познакомимся.")
-        
+
         # Отправляем клавиатуру с кнопкой "Поделиться номером"
         sent_message = await message.answer("Пожалуйста, поделись своим номером телефона.", reply_markup=get_phone_keyboard())
-        
+
         # Сохраняем ID сообщения бота
         await state.update_data(last_bot_message_id=sent_message.message_id)
         await state.set_state(RegistrationStates.waiting_for_phone)
@@ -89,10 +88,9 @@ async def process_first_name(message: types.Message, state: FSMContext, bot: Bot
 async def process_last_name(message: types.Message, state: FSMContext, bot: Bot):
     # Удаляем предыдущее сообщение бота
     data = await state.get_data()
-    last_bot_message_id = data.get("last_bot_message_id")
-    if last_bot_message_id:
+    if last_bot_message_id := data.get("last_bot_message_id"):
         await delete_previous_message(bot, message.chat.id, last_bot_message_id)
-    
+
     # Получаем данные из состояния
     phone_number = data.get("phone_number")
     first_name = data.get("first_name")
