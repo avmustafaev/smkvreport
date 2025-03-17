@@ -1,21 +1,30 @@
-from aiogram import Router, types, F
+from aiogram import F, Router, types
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 
-from app.database import get_user, get_all_users, update_user_role, delete_user
+from app.database import (
+    delete_user,
+    get_all_users,
+    get_banned_users,
+    get_user,
+    update_user_role,
+)
 from app.keyboards.adminkeyboard import get_admin_keyboard, get_role_keyboard
 
 # Создаём роутер
 router = Router()
+
 
 # Состояния для FSM (Finite State Machine)
 class RoleChangeStates(StatesGroup):
     waiting_for_chat_id = State()
     waiting_for_role = State()
 
+
 class DeleteUserStates(StatesGroup):
     waiting_for_chat_id = State()
+
 
 # Обработчик команды /admin
 @router.message(Command("admin"))
@@ -23,18 +32,18 @@ async def admin_command(message: types.Message):
     user = get_user(message.chat.id)
     if user and user.role == "superadmin":
         await message.answer(
-            "Панель администратора:",
-            reply_markup=get_admin_keyboard()
+            "Панель администратора:", reply_markup=get_admin_keyboard()
         )
     else:
         await message.answer(f"Извините, {user.first_name}, вы не являетесь админом.")
+
 
 # Обработчик кнопки "Вывести список пользователей"
 @router.callback_query(F.data == "list_users")
 async def list_users(callback: types.CallbackQuery):
     # Получаем всех пользователей, исключая забаненных
     users = get_all_users()
-    
+
     if users:
         # Формируем сообщение со списком пользователей
         users_list = "Список пользователей:\n\n"
@@ -52,12 +61,16 @@ async def list_users(callback: types.CallbackQuery):
     # Подтверждаем обработку callback
     await callback.answer()
 
+
 # Обработчик кнопки "Изменить роль пользователю"
 @router.callback_query(F.data == "change_role")
 async def change_role(callback: types.CallbackQuery, state: FSMContext):
-    await callback.message.answer("Введите chat_id пользователя, которому хотите изменить роль:")
+    await callback.message.answer(
+        "Введите chat_id пользователя, которому хотите изменить роль:"
+    )
     await state.set_state(RoleChangeStates.waiting_for_chat_id)
     await callback.answer()
+
 
 # Обработчик ввода chat_id для изменения роли
 @router.message(RoleChangeStates.waiting_for_chat_id)
@@ -82,12 +95,15 @@ async def process_chat_id(message: types.Message, state: FSMContext):
     await message.answer(
         f"Пользователь найден: {user.first_name} {user.last_name}.\n"
         "Выберите новую роль:",
-        reply_markup=get_role_keyboard()
+        reply_markup=get_role_keyboard(),
     )
     await state.set_state(RoleChangeStates.waiting_for_role)
 
+
 # Обработчик выбора роли
-@router.callback_query(RoleChangeStates.waiting_for_role, F.data.startswith("set_role_"))
+@router.callback_query(
+    RoleChangeStates.waiting_for_role, F.data.startswith("set_role_")
+)
 async def set_role(callback: types.CallbackQuery, state: FSMContext):
     # Получаем выбранную роль из callback_data
     role = callback.data.replace("set_role_", "")
@@ -100,16 +116,22 @@ async def set_role(callback: types.CallbackQuery, state: FSMContext):
     update_user_role(chat_id, role)
 
     # Отправляем сообщение об успешном изменении роли
-    await callback.message.answer(f"Роль пользователя с chat_id {chat_id} изменена на {role}.")
+    await callback.message.answer(
+        f"Роль пользователя с chat_id {chat_id} изменена на {role}."
+    )
     await state.clear()
     await callback.answer()
+
 
 # Обработчик кнопки "Удалить пользователя"
 @router.callback_query(F.data == "delete_user")
 async def delete_user_handler(callback: types.CallbackQuery, state: FSMContext):
-    await callback.message.answer("Введите chat_id пользователя, которого хотите удалить:")
+    await callback.message.answer(
+        "Введите chat_id пользователя, которого хотите удалить:"
+    )
     await state.set_state(DeleteUserStates.waiting_for_chat_id)
     await callback.answer()
+
 
 # Обработчик ввода chat_id для удаления пользователя
 @router.message(DeleteUserStates.waiting_for_chat_id)
@@ -133,12 +155,12 @@ async def process_delete_chat_id(message: types.Message, state: FSMContext):
     # Отправляем сообщение об успешном удалении
     await message.answer(f"Пользователь с chat_id {chat_id} удалён.")
     await state.clear()
-    
+
+
 @router.callback_query(F.data == "list_banned_users")
 async def list_banned_users(callback: types.CallbackQuery):
     # Получаем всех забаненных пользователей из базы данных
     users = get_banned_users()
-    
     if users:
         # Формируем сообщение со списком забаненных пользователей
         users_list = "Список забаненных пользователей:\n\n"
