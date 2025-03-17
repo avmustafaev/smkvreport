@@ -26,10 +26,9 @@ def get_user(chat_id: int) -> User:
         user = db.query(User).filter(User.chat_id == chat_id).first()
         return user
 
-# Получение списка всех пользователей
 def get_all_users():
     with get_db() as db:
-        users = db.query(User).all()
+        users = db.query(User).filter(User.role != "ban").all()  # Исключаем забаненных
         return users
 
 # Обновление роли пользователя
@@ -48,3 +47,9 @@ def delete_user(chat_id: int):
         if user:
             db.delete(user)
             db.commit()
+
+
+def get_banned_users():
+    with get_db() as db:
+        users = db.query(User).filter(User.role == "ban").all()
+        return users

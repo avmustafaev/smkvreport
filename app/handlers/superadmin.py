@@ -32,7 +32,7 @@ async def admin_command(message: types.Message):
 # Обработчик кнопки "Вывести список пользователей"
 @router.callback_query(F.data == "list_users")
 async def list_users(callback: types.CallbackQuery):
-    # Получаем всех пользователей из базы данных
+    # Получаем всех пользователей, исключая забаненных
     users = get_all_users()
     
     if users:
@@ -133,3 +133,25 @@ async def process_delete_chat_id(message: types.Message, state: FSMContext):
     # Отправляем сообщение об успешном удалении
     await message.answer(f"Пользователь с chat_id {chat_id} удалён.")
     await state.clear()
+    
+@router.callback_query(F.data == "list_banned_users")
+async def list_banned_users(callback: types.CallbackQuery):
+    # Получаем всех забаненных пользователей из базы данных
+    users = get_banned_users()
+    
+    if users:
+        # Формируем сообщение со списком забаненных пользователей
+        users_list = "Список забаненных пользователей:\n\n"
+        for user in users:
+            users_list += (
+                f"ID: {user.chat_id}\n"
+                f"Имя: {user.first_name} {user.last_name}\n"
+                f"Телефон: {user.phone_number}\n"
+                f"Роль: {user.role}\n\n"
+            )
+        await callback.message.answer(users_list)
+    else:
+        await callback.message.answer("Забаненные пользователи не найдены.")
+
+    # Подтверждаем обработку callback
+    await callback.answer()
